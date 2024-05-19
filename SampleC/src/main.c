@@ -1,10 +1,8 @@
 #include <stdio.h>
-
-__declspec(dllimport) void Show(void);
+#include "Swindow.h"
 
 int main(void)
 {
-	printf("Hello, World!");
-	Show();
-	return 0;
+    show("Swindow Application");
+    return 0;
 }

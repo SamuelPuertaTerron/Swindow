@@ -1,3 +1,0 @@
-F:\Personal Work\C++\Swindow\obj\Debug\Sample\Sample.csproj.AssemblyReference.cache
-F:\Personal Work\C++\Swindow\obj\Debug\Sample\Sample.csproj.SuggestedBindingRedirects.cache
-F:\Personal Work\C++\Swindow\obj\Debug\Sample\Sample.csproj.CoreCompileInputs.cache

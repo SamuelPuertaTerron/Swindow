@@ -1,3 +1,0 @@
-﻿  main.c
-main.obj : error LNK2019: unresolved external symbol __imp__Show referenced in function _main
-bin\Debug\SampleC.exe : fatal error LNK1120: 1 unresolved externals
