@@ -20,31 +20,31 @@ extern "C" {
     typedef void(*WindowCloseCallback)(int close);
 
     // Define a structure that holds platform-specific data
-    typedef struct Window Window;
+    typedef struct SwindowWindow SwindowWindow;
 
     // Create and initialize the window
-    Window* window_create(int width, int height, const char* title);
+    SwindowWindow* window_create(int width, int height, const char* title);
 
     WindowCallbacks* window_callbacks_create();
     void window_callbacks_destroy(WindowCallbacks* callback);
 
-    void window_set_resize_callback(Window* window, ResizeCallback resize);
-    void window_set_close_callback(Window* window, WindowCloseCallback close);
+    void window_set_resize_callback(SwindowWindow* window, ResizeCallback resize);
+    void window_set_close_callback(SwindowWindow* window, WindowCloseCallback close);
 
-    void window_set_callbacks(Window* window, WindowCallbacks* callback);
+    void window_set_callbacks(SwindowWindow* window, WindowCallbacks* callback);
 
-    void window_create_context(Window* window);
+    void window_create_context(SwindowWindow* window);
 
     // Destroy the window
-    void window_destroy(Window* window);
+    void window_destroy(SwindowWindow* window);
 
     // Handle window events
-    void window_poll_events(Window* window);
+    void window_poll_events(SwindowWindow* window);
 
     // Main loop for the window
-    void window_swap_buffers(Window* window);
+    void window_swap_buffers(SwindowWindow* window);
 
-    int window_should_close(Window* window);
+    int window_should_close(SwindowWindow* window);
 
     // Platform-specific function (for cleanup, etc.)
     void window_shutdown(void);
@@ -57,9 +57,9 @@ extern "C" {
     void input_destroy(InputCallbacks* callback);
 
     //Callbacks
-    void input_set_key_callback(Window* window, KeyCallback key);
-    void input_set_mouse_callback(Window* window, MouseCallback mouse);
-    void input_set_mouse_wheel_callback(Window* window, MouseWheelCallback mouse_wheel);
+    void input_set_key_callback(SwindowWindow* window, KeyCallback key);
+    void input_set_mouse_callback(SwindowWindow* window, MouseCallback mouse);
+    void input_set_mouse_wheel_callback(SwindowWindow* window, MouseWheelCallback mouse_wheel);
 
 #pragma endregion
 

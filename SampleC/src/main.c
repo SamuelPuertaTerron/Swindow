@@ -26,7 +26,7 @@ void resize_callback(int width, int height)
 
 int main(void)
 {
-	Window* window = window_create(1270, 720, "Hello World");
+	SwindowWindow* window = window_create(1270, 720, "Hello World");
 
 	input_set_mouse_callback(window, mouse_callback);
 	input_set_key_callback(window, key_callback);

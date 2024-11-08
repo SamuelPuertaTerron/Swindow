@@ -20,7 +20,7 @@ struct WindowCallbacks
 	WindowCloseCallback close_callback;
 };
 
-struct Window
+struct SwindowWindow
 {
 	HWND hwnd;
 	int width;
@@ -42,7 +42,7 @@ LPCWSTR convertCharArrayToLPCWSTR(const char* charArray)
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	Window* window = (Window*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+	SwindowWindow* window = (SwindowWindow*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
 	if (window) {
 		if ((window->input_callbacks->key_callback || window->input_callbacks->mouse_callback))
@@ -90,20 +90,28 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg) {
 	case WM_CLOSE:
 		PostQuitMessage(0);
-		if (window) window->window_close = 1;
+		if (window)
+		{
+			window->window_close = 1;
+			window->window_callbacks->close_callback(1);
+		}
 		return 0;
 	case WM_DESTROY:
 		PostQuitMessage(0);
-		if (window) window->window_close = 1;
+		if (window)
+		{
+			window->window_close = 1;
+			window->window_callbacks->close_callback(1);
+		}
 		return 0;
 	}
 
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-Window* window_create(int width, int height, const char* title)
+SwindowWindow* window_create(int width, int height, const char* title)
 {
-	Window* window = malloc(sizeof(Window));
+	SwindowWindow* window = malloc(sizeof(SwindowWindow));
 	if (!window) return NULL;
 
 	window->width = width;
@@ -142,22 +150,22 @@ void window_callbacks_destroy(WindowCallbacks* callback)
 	free(callback);
 }
 
-void window_set_resize_callback(Window* window, ResizeCallback resize)
+void window_set_resize_callback(SwindowWindow* window, ResizeCallback resize)
 {
 	window->window_callbacks->resize_callback = resize;
 }
 
-void window_set_close_callback(Window* window, WindowCloseCallback close)
+void window_set_close_callback(SwindowWindow* window, WindowCloseCallback close)
 {
 	window->window_callbacks->close_callback = close;
 }
 
-void window_set_callbacks(Window* window, WindowCallbacks* callback)
+void window_set_callbacks(SwindowWindow* window, WindowCallbacks* callback)
 {
 	window->window_callbacks = callback;
 }
 
-void window_create_context(Window* window)
+void window_create_context(SwindowWindow* window)
 {
 	if (!window) return;
 
@@ -176,7 +184,7 @@ void window_create_context(Window* window)
 	wglMakeCurrent(hdc, hglrc);
 }
 
-void window_destroy(Window* window)
+void window_destroy(SwindowWindow* window)
 {
 	if (window) {
 		window_callbacks_destroy(window->window_callbacks);
@@ -188,7 +196,7 @@ void window_destroy(Window* window)
 	}
 }
 
-void window_poll_events(Window* window)
+void window_poll_events(SwindowWindow* window)
 {
 	MSG msg;
 	while (PeekMessage(&msg, window ? window->hwnd : NULL, 0, 0, PM_REMOVE)) {
@@ -202,12 +210,12 @@ void window_poll_events(Window* window)
 	}
 }
 
-void window_swap_buffers(Window* window)
+void window_swap_buffers(SwindowWindow* window)
 {
 	if (window) SwapBuffers(GetDC(window->hwnd));
 }
 
-int window_should_close(Window* window)
+int window_should_close(SwindowWindow* window)
 {
 	return window ? window->window_close : 1;
 }
@@ -228,17 +236,17 @@ void input_destroy(InputCallbacks* callback)
 	free(callback);
 }
 
-void input_set_key_callback(Window* window, KeyCallback key)
+void input_set_key_callback(SwindowWindow* window, KeyCallback key)
 {
 	window->input_callbacks->key_callback = key;
 }
 
-void input_set_mouse_callback(Window* window, MouseCallback mouse)
+void input_set_mouse_callback(SwindowWindow* window, MouseCallback mouse)
 {
 	window->input_callbacks->mouse_callback = mouse;
 }
 
-void input_set_mouse_wheel_callback(Window* window, MouseWheelCallback mouse_wheel)
+void input_set_mouse_wheel_callback(SwindowWindow* window, MouseWheelCallback mouse_wheel)
 {
 	window->input_callbacks->mouse_wheel_callback = mouse_wheel;
 }
@@ -276,7 +284,7 @@ void gl_set_clear_colour(float r, float g, float b, float a)
 #include <GL/glx.h>
 #include <stdlib.h>
 
-struct Window {
+struct SwindowWindow {
 	Display* display;
 	Window win;
 	GLXContext gl_context;
@@ -285,8 +293,8 @@ struct Window {
 	int window_close;
 };
 
-Window* window_create(int width, int height, const char* title) {
-	Window* window = malloc(sizeof(Window));
+SwindowWindow* window_create(int width, int height, const char* title) {
+	SwindowWindow* window = malloc(sizeof(SwindowWindow));
 	window->width = width;
 	window->height = height;
 	window->window_close = 0;
@@ -315,11 +323,11 @@ Window* window_create(int width, int height, const char* title) {
 	return window;
 }
 
-void create_context(Window* window) {
+void create_context(SwindowWindow* window) {
 	// OpenGL context is already created in window_create
 }
 
-void window_destroy(Window* window) {
+void window_destroy(SwindowWindow* window) {
 	if (window) {
 		glXDestroyContext(window->display, window->gl_context);
 		XDestroyWindow(window->display, window->win);
@@ -328,7 +336,7 @@ void window_destroy(Window* window) {
 	}
 }
 
-void window_poll_events(Window* window) {
+void window_poll_events(SwindowWindow* window) {
 	XEvent event;
 	while (XPending(window->display) > 0) {
 		XNextEvent(window->display, &event);
@@ -338,14 +346,14 @@ void window_poll_events(Window* window) {
 	}
 }
 
-void window_main_loop(Window* window) {
+void window_main_loop(SwindowWindow* window) {
 	while (!window_should_close(window)) {
 		window_poll_events(window);
 		glXSwapBuffers(window->display, window->win);
 	}
 }
 
-int window_should_close(Window* window) {
+int window_should_close(SwindowWindow* window) {
 	return window->window_close;
 }
 
