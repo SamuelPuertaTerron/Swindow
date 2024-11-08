@@ -1,4 +1,1 @@
-﻿  Swindow.c
-D:\Work\C++\C++\Framework\Swindow\Swindow\src\Swindow.c(7,30): warning C4273: 'show': inconsistent dll linkage
-D:\Work\C++\C++\Framework\Swindow\Swindow\src\Swindow.h(10,18): message : see previous definition of 'show'
-  Swindow.vcxproj -> D:\Work\C++\C++\Framework\Swindow\bin\Debug-windows-x86_64\Swindow\Swindow.dll
+﻿  Swindow.vcxproj -> D:\Work\Code\C++\Framework\Swindow\bin\Debug-windows-x86_64\Swindow\Swindow.lib

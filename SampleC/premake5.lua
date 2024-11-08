@@ -13,25 +13,24 @@ project "SampleC"
     includedirs
     {
         "../Swindow/src",
-        "../external/SDL2/include"
     }
 
     links
     {
         "Swindow",
-        "../external/SDL2/SDL2",
-        "../external/SDL2/SDL2main"
-    }
-
-    libdirs
-    {
-        "../bin/" .. outputdir .. "/Swindow",
     }
 
     postbuildcommands
     {
         -- Copy swindow.dll to the target directory
         "{COPYDIR} %{wks.location}/bin/" .. outputdir .. "/Swindow %{cfg.targetdir}"
+    }
+
+    filter "system:windows"
+    systemversion "latest"
+    defines 
+    {
+        "SW_PLATFORM_WINDOWS" 
     }
 
     filter "configurations:Debug"

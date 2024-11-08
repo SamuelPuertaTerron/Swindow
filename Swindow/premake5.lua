@@ -1,5 +1,5 @@
 project "Swindow"
-    kind "SharedLib"
+    kind "staticlib"
     language "C"
     targetdir ("../bin/" .. outputdir .. "/%{prj.name}")
     objdir ("../bin-int/" .. outputdir .. "/%{prj.name}")
@@ -10,27 +10,11 @@ project "Swindow"
         "src/**.c" 
     }
 
-    includedirs
-    {
-        "../external/SDL2/include"
-    }
-
-    libdirs
-    {
-        "../external/SDL2",
-    }
-
-    links
-    {
-        "../external/SDL2/SDL2",
-        "../external/SDL2/SDL2main"
-    }
-
     filter "system:windows"
         systemversion "latest"
         defines 
         {
-            "SDL_MAIN_HANDLED"  -- Define this if you don't use SDL's main function
+            "SW_PLATFORM_WINDOWS"
         }
 
     filter "configurations:Debug"
