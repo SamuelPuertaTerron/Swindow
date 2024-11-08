@@ -9,12 +9,14 @@ void key_callback(int key, int is_pressed)
 	}
 }
 
-void mouse_callback(int button, int is_pressed)
+void mouse_callback(int button)
 {
-	if(is_pressed == 1)
-	{
-		printf("Key %d pressed \n", button);
-	}
+	printf("Key %d pressed \n", button);
+}
+
+void mouse_wheel_callback(float value)
+{
+	printf("Mouse Wheel Moved %f \n", value);
 }
 
 void resize_callback(int width, int height)
@@ -26,18 +28,19 @@ int main(void)
 {
 	Window* window = window_create(1270, 720, "Hello World");
 
-	InputCallbacks* input = input_create();
-	input_set_window_callbacks(window, input);
-	input_set_mouse_callback(input, mouse_callback);
-	input_set_key_callback(input, key_callback);
+	input_set_mouse_callback(window, mouse_callback);
+	input_set_key_callback(window, key_callback);
+	input_set_mouse_wheel_callback(window, mouse_wheel_callback);
 
-	WindowCallbacks* window_callback = window_callbacks_create();
-	window_callbacks_set_resize(window_callback, resize_callback);
-	window_set_callbacks(window, window_callback);
+	window_set_resize_callback(window, resize_callback);
 
 	window_create_context(window);
 
-	gl_display_current__version();
+	gl_display_current_version();
+	gl_display_current_vendor();
+	gl_display_current_extension();
+	gl_display_current_renderer();
+
 
 	while (!window_should_close(window))
 	{
@@ -47,10 +50,6 @@ int main(void)
 
 		window_swap_buffers(window);
 	}
-
-	window_callbacks_destroy(window_callback);
-
-	input_destroy(input);
 
 	window_destroy(window);
 

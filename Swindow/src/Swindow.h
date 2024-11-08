@@ -1,12 +1,6 @@
 #ifndef SWINDOW_H
 #define SWINDOW_H
 
-#ifdef SWINDOW_EXPORTS
-#define SWINDOW_API __declspec(dllexport)
-#else
-#define SWINDOW_API __declspec(dllimport)
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -15,13 +9,15 @@ extern "C" {
 
 
     typedef void(*KeyCallback)(int key, int is_pressed);
-    typedef void(*MouseCallback)(int key, int is_pressed);
+    typedef void(*MouseCallback)(int key);
+    typedef void(*MouseWheelCallback)(float value);
 
     typedef struct InputCallbacks InputCallbacks;
 
     typedef struct WindowCallbacks WindowCallbacks;
 
     typedef void(*ResizeCallback)(int x, int y);
+    typedef void(*WindowCloseCallback)(int close);
 
     // Define a structure that holds platform-specific data
     typedef struct Window Window;
@@ -32,7 +28,8 @@ extern "C" {
     WindowCallbacks* window_callbacks_create();
     void window_callbacks_destroy(WindowCallbacks* callback);
 
-    void window_callbacks_set_resize(WindowCallbacks* callback, ResizeCallback resize);
+    void window_set_resize_callback(Window* window, ResizeCallback resize);
+    void window_set_close_callback(Window* window, WindowCloseCallback close);
 
     void window_set_callbacks(Window* window, WindowCallbacks* callback);
 
@@ -60,14 +57,18 @@ extern "C" {
     void input_destroy(InputCallbacks* callback);
 
     //Callbacks
-    void input_set_window_callbacks(Window* window, InputCallbacks* callback);
-    void input_set_key_callback(InputCallbacks* callback, KeyCallback key);
-    void input_set_mouse_callback(InputCallbacks* callback, MouseCallback key);
+    void input_set_key_callback(Window* window, KeyCallback key);
+    void input_set_mouse_callback(Window* window, MouseCallback mouse);
+    void input_set_mouse_wheel_callback(Window* window, MouseWheelCallback mouse_wheel);
 
 #pragma endregion
 
 #pragma region OpenGL
-    void gl_display_current__version(void);
+    void gl_display_current_version(void);
+    void gl_display_current_vendor(void);
+    void gl_display_current_renderer(void);
+    void gl_display_current_extension(void);
+
     void gl_set_clear_colour(float r, float g, float b, float a);
 #pragma endregion
 

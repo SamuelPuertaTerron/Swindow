@@ -9,13 +9,15 @@
 
 struct InputCallbacks
 {
-	KeyCallback keyCallback;
-	MouseCallback mouseCallback;
+	KeyCallback key_callback;
+	MouseCallback mouse_callback;
+	MouseWheelCallback mouse_wheel_callback;
 };
 
 struct WindowCallbacks
 {
 	ResizeCallback resize_callback;
+	WindowCloseCallback close_callback;
 };
 
 struct Window
@@ -43,24 +45,37 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	Window* window = (Window*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
 
 	if (window) {
-		if ((window->input_callbacks->keyCallback || window->input_callbacks->mouseCallback)) 
+		if ((window->input_callbacks->key_callback || window->input_callbacks->mouse_callback))
 		{
 			switch (uMsg)
 			{
 			case WM_KEYDOWN:
 			case WM_KEYUP:
-				if (window->input_callbacks->keyCallback) {
+				if (window->input_callbacks->key_callback) {
 					int key = (int)wParam;
 					int is_pressed = (uMsg == WM_KEYDOWN) ? 1 : 0;
-					window->input_callbacks->keyCallback(key, is_pressed);
+					window->input_callbacks->key_callback(key, is_pressed);
 				}
 				break;
 			case WM_LBUTTONDOWN:
+				if (window->input_callbacks->mouse_callback)
+				{
+					int button = (int)wParam;
+					window->input_callbacks->mouse_callback(button);
+				}
+				break;;
+			case WM_MOUSEWHEEL:
+				if(window->input_callbacks->mouse_wheel_callback)
+				{
+					float value = (float)GET_WHEEL_DELTA_WPARAM(wParam);
+					window->input_callbacks->mouse_wheel_callback(value);
+				}
+				break;
 			case WM_RBUTTONDOWN:
-				if (window->input_callbacks->mouseCallback) {
-					int key = (int)wParam;
-					int is_pressed = (uMsg == WM_LBUTTONDOWN) ? 1 : 0;
-					window->input_callbacks->mouseCallback(key, is_pressed);
+				if (window->input_callbacks->mouse_callback) {
+					int button = (int)wParam;
+					int is_pressed = (uMsg == WM_MBUTTONDOWN) ? 1 : 0;
+					window->input_callbacks->mouse_callback(button);
 				}
 				break;
 			case WM_SIZE:
@@ -106,6 +121,13 @@ Window* window_create(int width, int height, const char* title)
 	UpdateWindow(window->hwnd);
 
 	SetWindowLongPtr(window->hwnd, GWLP_USERDATA, (LONG_PTR)window);
+
+	WindowCallbacks* window_callback = window_callbacks_create();
+	window->window_callbacks = window_callback;
+
+	InputCallbacks* input = input_create();
+	window->input_callbacks = input;
+
 	return window;
 }
 
@@ -120,9 +142,14 @@ void window_callbacks_destroy(WindowCallbacks* callback)
 	free(callback);
 }
 
-void window_callbacks_set_resize(WindowCallbacks* callback, ResizeCallback resize)
+void window_set_resize_callback(Window* window, ResizeCallback resize)
 {
-	callback->resize_callback = resize;
+	window->window_callbacks->resize_callback = resize;
+}
+
+void window_set_close_callback(Window* window, WindowCloseCallback close)
+{
+	window->window_callbacks->close_callback = close;
 }
 
 void window_set_callbacks(Window* window, WindowCallbacks* callback)
@@ -152,6 +179,10 @@ void window_create_context(Window* window)
 void window_destroy(Window* window)
 {
 	if (window) {
+		window_callbacks_destroy(window->window_callbacks);
+
+		input_destroy(window->input_callbacks);
+
 		DestroyWindow(window->hwnd);
 		free(window);
 	}
@@ -186,11 +217,6 @@ void window_shutdown(void)
 	// Platform-specific shutdown code (Windows)
 }
 
-void input_set_callbacks(Window* window, InputCallbacks* callbacks)
-{
-	window->input_callbacks = callbacks;
-}
-
 InputCallbacks* input_create()
 {
 	InputCallbacks* input = malloc(sizeof(InputCallbacks));
@@ -202,26 +228,43 @@ void input_destroy(InputCallbacks* callback)
 	free(callback);
 }
 
-void input_set_window_callbacks(Window* window, InputCallbacks* callback)
+void input_set_key_callback(Window* window, KeyCallback key)
 {
-	window->input_callbacks = callback;
+	window->input_callbacks->key_callback = key;
 }
 
-void input_set_key_callback(InputCallbacks* callback, KeyCallback key)
+void input_set_mouse_callback(Window* window, MouseCallback mouse)
 {
-	callback->keyCallback = key;
+	window->input_callbacks->mouse_callback = mouse;
 }
 
-void input_set_mouse_callback(InputCallbacks* callback, MouseCallback mouse)
+void input_set_mouse_wheel_callback(Window* window, MouseWheelCallback mouse_wheel)
 {
-	callback->mouseCallback = mouse;
+	window->input_callbacks->mouse_wheel_callback = mouse_wheel;
 }
 
-void gl_display_current__version(void) {
+void gl_display_current_version(void)
+{
 	MessageBoxA(0, (char*)glGetString(GL_VERSION), "OPENGL VERSION", 0);
 }
 
-void gl_set_clear_colour(float r, float g, float b, float a) {
+void gl_display_current_vendor(void)
+{
+	MessageBoxA(0, (char*)glGetString(GL_VENDOR), "OPENGL VENDOR", 0);
+}
+
+void gl_display_current_renderer(void)
+{
+	MessageBoxA(0, (char*)glGetString(GL_RENDERER), "OPENGL RENDERER", 0);
+}
+
+void gl_display_current_extension(void)
+{
+	MessageBoxA(0, (char*)glGetString(GL_EXTENSIONS), "OPENGL RENDERER", 0);
+}
+
+void gl_set_clear_colour(float r, float g, float b, float a)
+{
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClearColor(r, g, b, a);
 }
