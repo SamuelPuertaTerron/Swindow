@@ -85,10 +85,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\SwindowInput.h" />
+    <ClInclude Include="src\SwindowWindow.h" />
+    <ClInclude Include="src\SwindowThread.h" />
+    <ClInclude Include="src\Backends\SwindowWin32.h" />
+    <ClInclude Include="src\Backends\SwindowX11.h" />
     <ClInclude Include="src\Swindow.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Backends\SwindowWin32.c" />
+    <ClCompile Include="src\SwindowWindow.c" />
     <ClCompile Include="src\Swindow.c" />
+    <ClCompile Include="src\SwindowInput.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -7,7 +7,7 @@ project "Swindow"
     files 
     { 
         "src/**.h", 
-        "src/**.c" 
+        "src/**.c",
     }
 
     filter "system:windows"

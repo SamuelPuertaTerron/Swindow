@@ -1,13 +1,9 @@
 #include "Swindow.h"
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
-#ifdef SW_PLATFORM_WINDOWS
-#include <Windows.h>
-#include <GL/GL.h>
-#pragma comment (lib, "opengl32.lib")
-
-struct InputCallbacks
+/*struct InputCallbacks
 {
 	KeyCallback key_callback;
 	MouseCallback mouse_callback;
@@ -20,15 +16,11 @@ struct WindowCallbacks
 	WindowCloseCallback close_callback;
 };
 
-struct SwindowWindow
-{
-	HWND hwnd;
-	int width;
-	int height;
-	int window_close;
-	InputCallbacks* input_callbacks;
-	WindowCallbacks* window_callbacks;
-};
+#ifdef SW_PLATFORM_WINDOWS
+#include <Windows.h>
+#include <GL/GL.h>
+#pragma comment (lib, "opengl32.lib")
+
 
 LPCWSTR convertCharArrayToLPCWSTR(const char* charArray)
 {
@@ -51,7 +43,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 			case WM_KEYDOWN:
 			case WM_KEYUP:
-				if (window->input_callbacks->key_callback) {
+				if (window->input_callbacks->key_callback) 
+				{
 					int key = (int)wParam;
 					int is_pressed = (uMsg == WM_KEYDOWN) ? 1 : 0;
 					window->input_callbacks->key_callback(key, is_pressed);
@@ -81,27 +74,29 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case WM_SIZE:
 				window->width = LOWORD(lParam);
 				window->height = HIWORD(lParam);
-				window->window_callbacks->resize_callback(window->width, window->height);
+				if(window->window_callbacks && window->window_callbacks->resize_callback)
+				{
+					window->window_callbacks->resize_callback(window->width, window->height);
+				}
 				break;
 			}
 		}
 	}
 
-	switch (uMsg) {
+	switch (uMsg)
+	{
 	case WM_CLOSE:
 		PostQuitMessage(0);
 		if (window)
 		{
-			window->window_close = 1;
-			window->window_callbacks->close_callback(1);
+			window->is_window_running = false;
 		}
 		return 0;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		if (window)
 		{
-			window->window_close = 1;
-			window->window_callbacks->close_callback(1);
+			window->is_window_running = false;
 		}
 		return 0;
 	}
@@ -109,67 +104,82 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-SwindowWindow* window_create(int width, int height, const char* title)
+SwindowWindow* sw_window_create(int width, int height, const char* title)
 {
 	SwindowWindow* window = malloc(sizeof(SwindowWindow));
 	if (!window) return NULL;
 
 	window->width = width;
 	window->height = height;
-	window->window_close = 0;
+	window->is_window_running = true;
 	window->input_callbacks = NULL;
+	window->window_callbacks = NULL;
 
 	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WindowProc, 0L, 0L, GetModuleHandle(NULL), NULL, NULL, NULL, NULL, convertCharArrayToLPCWSTR(title), NULL };
 	RegisterClassEx(&wc);
 
-	window->hwnd = CreateWindowEx(0, wc.lpszClassName, convertCharArrayToLPCWSTR(title), WS_OVERLAPPEDWINDOW,
+	sw_create_native_window(window);
+
+	memset(&window->native_window->wp_prev, 0, sizeof(window->native_window->wp_prev));
+	window->native_window->wp_prev.length = sizeof(window->native_window->wp_prev);
+
+	window->native_window->hwnd = CreateWindowEx(0, wc.lpszClassName, convertCharArrayToLPCWSTR(title), WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, width, height, NULL, NULL, wc.hInstance, NULL);
 
-	ShowWindow(window->hwnd, SW_SHOWDEFAULT);
-	UpdateWindow(window->hwnd);
+	ShowWindow(window->native_window->hwnd, SW_SHOWDEFAULT);
+	UpdateWindow(window->native_window->hwnd);
 
-	SetWindowLongPtr(window->hwnd, GWLP_USERDATA, (LONG_PTR)window);
+	SetWindowLongPtr(window->native_window->hwnd, GWLP_USERDATA, (LONG_PTR)window);
 
-	WindowCallbacks* window_callback = window_callbacks_create();
+	WindowCallbacks* window_callback = sw_window_callbacks_create();
 	window->window_callbacks = window_callback;
 
-	InputCallbacks* input = input_create();
+	window->window_callbacks->resize_callback = sw_default_window_resize;
+	window->window_callbacks->close_callback = sw_default_window_close;
+
+	InputCallbacks* input = sw_input_create();
 	window->input_callbacks = input;
+
+	window->input_callbacks->key_callback = sw_default_key_callback;
+	window->input_callbacks->mouse_callback = sw_default_mouse_callback;
+	window->input_callbacks->mouse_wheel_callback = sw_default_mouse_wheel_callback;
+
+	sw_toggle_fullscreen(window->native_window);
 
 	return window;
 }
 
-WindowCallbacks* window_callbacks_create()
+WindowCallbacks* sw_window_callbacks_create()
 {
 	WindowCallbacks* callback = malloc(sizeof(WindowCallbacks));
 	return callback;
 }
 
-void window_callbacks_destroy(WindowCallbacks* callback)
+void sw_window_callbacks_destroy(WindowCallbacks* callback)
 {
 	free(callback);
 }
 
-void window_set_resize_callback(SwindowWindow* window, ResizeCallback resize)
+void sw_window_set_resize_callback(SwindowWindow* window, ResizeCallback resize)
 {
 	window->window_callbacks->resize_callback = resize;
 }
 
-void window_set_close_callback(SwindowWindow* window, WindowCloseCallback close)
+void sw_window_set_close_callback(SwindowWindow* window, WindowCloseCallback close)
 {
 	window->window_callbacks->close_callback = close;
 }
 
-void window_set_callbacks(SwindowWindow* window, WindowCallbacks* callback)
+void sw_window_set_callbacks(SwindowWindow* window, WindowCallbacks* callback)
 {
 	window->window_callbacks = callback;
 }
 
-void window_create_context(SwindowWindow* window)
+void sw_window_create_context(SwindowWindow* window)
 {
 	if (!window) return;
 
-	HDC hdc = GetDC(window->hwnd);
+	HDC hdc = GetDC(window->native_window->hwnd);
 	PIXELFORMATDESCRIPTOR pfd = 
 	{
 		sizeof(PIXELFORMATDESCRIPTOR), 1,
@@ -184,97 +194,195 @@ void window_create_context(SwindowWindow* window)
 	wglMakeCurrent(hdc, hglrc);
 }
 
-void window_destroy(SwindowWindow* window)
+void* sw_get_proc_address(const char* proc)
 {
-	if (window) {
-		window_callbacks_destroy(window->window_callbacks);
+	PROC procAddress = wglGetProcAddress(proc);
 
-		input_destroy(window->input_callbacks);
+	// In some cases, wglGetProcAddress might return NULL for core functions
+	// If that's the case, we fall back to GetProcAddress from opengl32.dll
+	if (procAddress == NULL) {
+		HMODULE module = LoadLibraryA("opengl32.dll");
+		if (module != NULL) {
+			procAddress = GetProcAddress(module, proc);
+			FreeLibrary(module); 
+		}
+	}
 
-		DestroyWindow(window->hwnd);
-		free(window);
+	return (void*)procAddress;
+}
+
+void sw_toggle_fullscreen(SwindowNativeWindow* native_window)
+{
+	DWORD dwStyle = GetWindowLong(native_window->hwnd, GWL_STYLE);
+
+	if (dwStyle & WS_OVERLAPPEDWINDOW) {
+		// Save the current window placement and style
+		MONITORINFO mi = { sizeof(mi) };
+		if (GetWindowPlacement(native_window->hwnd, &native_window->wp_prev) &&
+			GetMonitorInfo(MonitorFromWindow(native_window->hwnd, MONITOR_DEFAULTTOPRIMARY), &mi)) {
+			// Remove window decorations
+			SetWindowLong(native_window->hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
+			// Set window size to cover the entire monitor area
+			SetWindowPos(native_window->hwnd, HWND_TOP,
+				mi.rcMonitor.left, mi.rcMonitor.top,
+				mi.rcMonitor.right - mi.rcMonitor.left,
+				mi.rcMonitor.bottom - mi.rcMonitor.top,
+				SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+		}
+	}
+	else {
+		// Restore the window's style and placement
+		SetWindowLong(native_window->hwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
+		SetWindowPlacement(native_window->hwnd, &native_window->wp_prev);
+		SetWindowPos(native_window->hwnd, NULL, 0, 0, 0, 0,
+			SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
 	}
 }
 
-void window_poll_events(SwindowWindow* window)
+void sw_window_destroy(SwindowWindow* window)
+{
+	if (window) {
+		sw_window_callbacks_destroy(window->window_callbacks);
+
+		sw_input_destroy(window->input_callbacks);
+
+		DestroyWindow(window->native_window->hwnd);
+		sw_destroy_native_window(window);
+		free(window);
+	}
+
+	printf("Window Destroyed");
+}
+
+void sw_window_poll_events(SwindowWindow* window)
 {
 	MSG msg;
-	while (PeekMessage(&msg, window ? window->hwnd : NULL, 0, 0, PM_REMOVE)) {
+	while (PeekMessage(&msg, window ? window->native_window->hwnd : NULL, 0, 0, PM_REMOVE)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 
 		if (msg.message == WM_QUIT) {
-			if (window) window->window_close = 1;
+			if (window)
+			{
+				window->is_window_running = false;
+			}
 			break;
 		}
 	}
 }
 
-void window_swap_buffers(SwindowWindow* window)
+void sw_window_swap_buffers(SwindowWindow* window)
 {
-	if (window) SwapBuffers(GetDC(window->hwnd));
+	if (window) SwapBuffers(GetDC(window->native_window->hwnd));
 }
 
-int window_should_close(SwindowWindow* window)
+bool sw_window_is_running(SwindowWindow* window)
 {
-	return window ? window->window_close : 1;
+	return window ? window->is_window_running : false;
 }
 
-void window_shutdown(void)
+void sw_set_window_is_running(SwindowWindow* window, bool value)
+{
+	window->is_window_running = value;
+}
+
+void sw_window_shutdown(void)
 {
 	// Platform-specific shutdown code (Windows)
 }
 
-InputCallbacks* input_create()
+void sw_default_window_resize(int x, int y)
+{
+	
+}
+
+void sw_default_window_close(void)
+{
+	
+}
+
+void sw_create_native_window(SwindowWindow* window)
+{
+	window->native_window = malloc(sizeof(SwindowNativeWindow));
+}
+
+SwindowNativeWindow* sw_get_native_window(SwindowWindow* window)
+{
+	return window->native_window;
+}
+
+void sw_destroy_native_window(SwindowWindow* window)
+{
+	free(window->native_window);
+}
+
+InputCallbacks* sw_input_create()
 {
 	InputCallbacks* input = malloc(sizeof(InputCallbacks));
 	return input;
 }
 
-void input_destroy(InputCallbacks* callback)
+void sw_input_destroy(InputCallbacks* callback)
 {
 	free(callback);
 }
 
-void input_set_key_callback(SwindowWindow* window, KeyCallback key)
+void sw_input_set_key_callback(SwindowWindow* window, KeyCallback key)
 {
 	window->input_callbacks->key_callback = key;
 }
 
-void input_set_mouse_callback(SwindowWindow* window, MouseCallback mouse)
+void sw_input_set_mouse_callback(SwindowWindow* window, MouseCallback mouse)
 {
 	window->input_callbacks->mouse_callback = mouse;
 }
 
-void input_set_mouse_wheel_callback(SwindowWindow* window, MouseWheelCallback mouse_wheel)
+void sw_input_set_mouse_wheel_callback(SwindowWindow* window, MouseWheelCallback mouse_wheel)
 {
 	window->input_callbacks->mouse_wheel_callback = mouse_wheel;
 }
 
-void gl_display_current_version(void)
+void sw_default_key_callback(int key, int is_pressed)
+{
+}
+
+void sw_default_mouse_callback(int key)
+{
+}
+
+void sw_default_mouse_wheel_callback(float value)
+{
+}
+
+void sw_gl_display_current_version(void)
 {
 	MessageBoxA(0, (char*)glGetString(GL_VERSION), "OPENGL VERSION", 0);
 }
 
-void gl_display_current_vendor(void)
+void sw_gl_display_current_vendor(void)
 {
 	MessageBoxA(0, (char*)glGetString(GL_VENDOR), "OPENGL VENDOR", 0);
 }
 
-void gl_display_current_renderer(void)
+void sw_gl_display_current_renderer(void)
 {
 	MessageBoxA(0, (char*)glGetString(GL_RENDERER), "OPENGL RENDERER", 0);
 }
 
-void gl_display_current_extension(void)
+void sw_gl_display_current_extension(void)
 {
 	MessageBoxA(0, (char*)glGetString(GL_EXTENSIONS), "OPENGL RENDERER", 0);
 }
 
-void gl_set_clear_colour(float r, float g, float b, float a)
+void sw_gl_set_clear_colour(float r, float g, float b, float a)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClearColor(r, g, b, a);
+}
+
+void sw_gl_set_viewport_size(int width, int height)
+{
+	glViewport(0, 0, width, height);
 }
 
 #endif // SW_PLATFORM_WINDOWS
@@ -360,4 +468,5 @@ int window_should_close(SwindowWindow* window) {
 void window_shutdown(void) {
 	// Any platform-specific shutdown code (Linux)
 }
-#endif
+#endif*/
+

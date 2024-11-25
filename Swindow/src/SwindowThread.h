@@ -1,0 +1,6 @@
+﻿#ifndef SWINDOW_THREAD_H
+#define SWINDOW_THREAD_H
+
+
+
+#endif //SWINDOW_THREAD_H

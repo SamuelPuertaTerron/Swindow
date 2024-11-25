@@ -1,57 +1,66 @@
+/*
+ *	This is an simple example of how to setup a window and input
+ */
+
 #include <stdio.h>
 #include "Swindow.h"
 
-void key_callback(int key, int is_pressed)
+swWindow* g_Window;
+bool g_Fullscreen = false;
+
+static void key_callback(int key, int is_pressed)
 {
-	if (is_pressed == 1) 
+	if(is_pressed == 0)
 	{
-		printf("Key %d pressed\n", key); 
+		if(key == 27) //Escape
+		{
+			swSetIsWindowRunning(g_Window, false);
+		}
+
+		if (key == 122) //F11
+		{
+			swSetFullscreen(g_Window);
+		}
 	}
 }
 
-void mouse_callback(int button)
+static void mouse_callback(int button)
 {
 	printf("Key %d pressed \n", button);
 }
 
-void mouse_wheel_callback(float value)
+static void mouse_wheel_callback(float value)
 {
-	printf("Mouse Wheel Moved %f \n", value);
+	printf("Mouse Wheel Moved %f \n", (double)value);
 }
 
-void resize_callback(int width, int height)
+static void resize_callback(int width, int height)
 {
-	printf("Window changed size to {%d, %d} \n", width, height);
+	printf("window resized [%d, %d] \n", width, height);
+}
+
+static void close(void)
+{
+	printf("Window Closed");
 }
 
 int main(void)
 {
-	SwindowWindow* window = window_create(1270, 720, "Hello World");
+	g_Window = swCreateWindow(1270, 720, "Hello from Swindow");
 
-	input_set_mouse_callback(window, mouse_callback);
-	input_set_key_callback(window, key_callback);
-	input_set_mouse_wheel_callback(window, mouse_wheel_callback);
+	swCreateResizeWindowCallback(g_Window, resize_callback);
+	swCreateCloseWindowCallback(g_Window, close);
 
-	window_set_resize_callback(window, resize_callback);
+	//Create Input system
+	swCreateInput(g_Window);
+	swCreateKeyCallback(g_Window, key_callback);
 
-	window_create_context(window);
-
-	gl_display_current_version();
-	gl_display_current_vendor();
-	gl_display_current_extension();
-	gl_display_current_renderer();
-
-
-	while (!window_should_close(window))
+	while(swGetIsWindowRunning(g_Window))
 	{
-		window_poll_events(window);
-
-		gl_set_clear_colour(0.0f, 0.0f, 1.0f, 1.0f);
-
-		window_swap_buffers(window);
+		swSwapBuffers(g_Window);
+		swPollEvents(g_Window);
 	}
 
-	window_destroy(window);
-
+	swDestroyWindow(g_Window);
 	return 0;
 }
