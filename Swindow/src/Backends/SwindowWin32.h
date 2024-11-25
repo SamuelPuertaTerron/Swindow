@@ -29,6 +29,9 @@ void swWin32CreateWindow(swWindow* window, int width, int height, const char* ti
 
 void swWin32SetFullscreen(swWindow* window);
 
+void swWin32CreateContext(swWindow* window);
+void* swWin32GetProcAddress(const char* name);
+
 void swWin32SwapBuffers(swWindow* window);
 void swWin32PollEvents(swWindow* window);
 

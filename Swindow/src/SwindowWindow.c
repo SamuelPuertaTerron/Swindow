@@ -11,6 +11,8 @@
 swWindow* swCreateWindow(int width, int height, const char* title)
 {
 	swWindow* window = malloc(sizeof(swWindow));
+	if (!window) return NULL;
+
 	window->width = width;
 	window->height = height;
 
@@ -27,6 +29,15 @@ void swCreateContext(swWindow* window)
 {
 #ifdef _WIN32
 	swWin32CreateContext(window);
+#elif __LINUX__
+
+#endif
+}
+
+void swGetProcAddress(const char* name)
+{
+#ifdef _WIN32
+	swWin32GetProcAddress(name);
 #elif __LINUX__
 
 #endif

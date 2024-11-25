@@ -24,26 +24,29 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case WM_KEYUP:
 			if (window->native_window->input->callbacks.key_callback)
 			{
-				int key = (int)wParam;
-				int is_pressed = (uMsg == WM_KEYDOWN) ? 1 : 0;
+				const int key = (int)wParam;
+				const int is_pressed = (uMsg == WM_KEYDOWN) ? 1 : 0;
 				window->native_window->input->callbacks.key_callback(key, is_pressed);
 			}
 			break;
 		case WM_LBUTTONDOWN:
-
+			if (window->native_window->input->callbacks.mouse_callback) {
+				const int button = (int)wParam;
+				window->native_window->input->callbacks.mouse_callback(button);
+			}
+			break;
 		case WM_MOUSEWHEEL:
-			/*if (window->input_callbacks->mouse_wheel_callback)
+			if (window->native_window->input->callbacks.mouse_wheel_callback)
 			{
-				float value = (float)GET_WHEEL_DELTA_WPARAM(wParam);
-				window->input_callbacks->mouse_wheel_callback(value);
-			}*/
+				const double value = GET_WHEEL_DELTA_WPARAM(wParam);
+				window->native_window->input->callbacks.mouse_wheel_callback(value);
+			}
 			break;
 		case WM_RBUTTONDOWN:
-			/* if (window->input_callbacks->mouse_callback) {
-				 int button = (int)wParam;
-				 int is_pressed = (uMsg == WM_MBUTTONDOWN) ? 1 : 0;
-				 window->input_callbacks->mouse_callback(button);
-			 }*/
+			if (window->native_window->input->callbacks.mouse_callback) {
+				 const int button = (int)wParam;
+				 window->native_window->input->callbacks.mouse_callback(button);
+			 }
 			break;
 		case WM_SIZE:
 			window->width = LOWORD(lParam);
@@ -65,9 +68,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (window)
 			{
 				window->native_window->is_running = false;
-
-				//if(window->callbacks.close)
-				//	window->callbacks.close();
 			}
 			return 0;
 		}
@@ -88,8 +88,8 @@ void swWin32CreateWindow(swWindow* window, int width, int height, const char* ti
 
 	RECT rect = { 0, 0, width, height };
 	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
-	int adjustedWidth = rect.right - rect.left;
-	int adjustedHeight = rect.bottom - rect.top;
+	const int adjustedWidth = rect.right - rect.left;
+	const int adjustedHeight = rect.bottom - rect.top;
 
 	const HWND hwnd = CreateWindowEx(0, wc.lpszClassName, ConvertCharArrayToLPCWSTR(title), WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, adjustedWidth, adjustedHeight,
@@ -97,19 +97,12 @@ void swWin32CreateWindow(swWindow* window, int width, int height, const char* ti
 	if (!hwnd) return;
 
 	const HDC hdc = GetDC(hwnd);
-	const PIXELFORMATDESCRIPTOR pfd = { sizeof(PIXELFORMATDESCRIPTOR), 1,
-								  PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-								  PFD_TYPE_RGBA, 32 };
-	const int pf = ChoosePixelFormat(hdc, &pfd);
-	SetPixelFormat(hdc, pf, &pfd);
-
-	const HGLRC glContext = wglCreateContext(hdc);
-	wglMakeCurrent(hdc, glContext);
 
 	swNativeWindow* nativeWindow = malloc(sizeof(swNativeWindow));
+	if (!nativeWindow) return;
+
 	nativeWindow->hwnd = hwnd;
 	nativeWindow->hdc = hdc;
-	nativeWindow->gl_context = glContext;
 	nativeWindow->is_running = true;
 	nativeWindow->wp_prev.length = sizeof(WINDOWPLACEMENT);
 	window->native_window = nativeWindow;
@@ -156,6 +149,47 @@ void swWin32SetFullscreen(swWindow* window)
 
 		ShowWindow(window->native_window->hwnd, SW_RESTORE);
 	}
+}
+
+void swWin32CreateContext(swWindow* window)
+{
+	const PIXELFORMATDESCRIPTOR pfd = {
+	sizeof(PIXELFORMATDESCRIPTOR), // Size of the descriptor
+	1,                             // Version number
+	PFD_DRAW_TO_WINDOW |           // Support window drawing
+	PFD_SUPPORT_OPENGL |           // Support OpenGL
+	PFD_DOUBLEBUFFER,              // Enable double buffering
+	PFD_TYPE_RGBA,                 // RGBA color mode
+	32,                            // 32-bit color depth
+	0, 0, 0, 0, 0, 0, // Ignore color bits
+	0,                             // No alpha buffer
+	0,                             // Ignore shift bit
+	0,                             // No accumulation buffer
+	0, 0, 0, 0, // Ignore accumulation bits
+	24,                            // 24-bit z-buffer
+	8,                             // 8-bit stencil buffer
+	0,                             // No auxiliary buffer
+	PFD_MAIN_PLANE,                // Main drawing layer
+	0,                             // Reserved
+	0, 0, 0 // Layer masks ignored
+	};
+
+	const int pf = ChoosePixelFormat(window->native_window->hdc, &pfd);
+	SetPixelFormat(window->native_window->hdc, pf, &pfd);
+
+	const HGLRC glContext = wglCreateContext(window->native_window->hdc);
+	wglMakeCurrent(window->native_window->hdc, glContext);
+
+	window->native_window->gl_context = glContext;
+}
+
+void* swWin32GetProcAddress(const char* name)
+{
+	void* proc = (void*)wglGetProcAddress(name);
+	if (!proc) {
+		return NULL;
+	}
+	return proc;
 }
 
 

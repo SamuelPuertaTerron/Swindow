@@ -2,7 +2,6 @@
 #define SWINDOW_WINDOW_H
 
 #include <stdbool.h>
-//#include "SwindowInput.h"
 
 typedef struct SwindowNativeWindow swNativeWindow;
 
@@ -22,13 +21,13 @@ typedef struct SwindowWindow
 	int width;
 	int height;
 	swWindowCallbacks callbacks;
-	//swInput* input;
 
 } swWindow;
 
 swWindow* swCreateWindow(int width, int height, const char* title);
 
 void swCreateContext(swWindow* window);
+void swGetProcAddress(const char* name);
 
 void swCreateCloseWindowCallback(swWindow* window, swOnCloseCallback close);
 void swCreateResizeWindowCallback(swWindow* window, swOnResizeCallback resize);

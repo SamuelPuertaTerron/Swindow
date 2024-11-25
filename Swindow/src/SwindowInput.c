@@ -16,9 +16,19 @@ int swCreateInput(swWindow* window)
 	return 0;
 }
 
-void swCreateKeyCallback(swWindow* Window, swKeyCallback KeyCallback)
+void swCreateKeyCallback(swWindow* window, swKeyCallback KeyCallback)
 {
-	Window->native_window->input->callbacks.key_callback = KeyCallback;
+	window->native_window->input->callbacks.key_callback = KeyCallback;
+}
+
+void swCreateMouseCallback(swWindow* window, swMouseCallback mouseCallback)
+{
+	window->native_window->input->callbacks.mouse_callback = mouseCallback;
+}
+
+void swCreateMouseWheelCallback(swWindow* window, swMouseWheelCallback mouseCallback)
+{
+	window->native_window->input->callbacks.mouse_wheel_callback = mouseCallback;
 }
 
 void swInputDestroy(swWindow* window)

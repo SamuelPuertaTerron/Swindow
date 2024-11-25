@@ -29,9 +29,9 @@ static void mouse_callback(int button)
 	printf("Key %d pressed \n", button);
 }
 
-static void mouse_wheel_callback(float value)
+static void mouse_wheel_callback(double value)
 {
-	printf("Mouse Wheel Moved %f \n", (double)value);
+	printf("Mouse Wheel Moved %f \n", value);
 }
 
 static void resize_callback(int width, int height)
@@ -48,12 +48,16 @@ int main(void)
 {
 	g_Window = swCreateWindow(1270, 720, "Hello from Swindow");
 
+	swCreateContext(g_Window);
+
 	swCreateResizeWindowCallback(g_Window, resize_callback);
 	swCreateCloseWindowCallback(g_Window, close);
 
 	//Create Input system
 	swCreateInput(g_Window);
 	swCreateKeyCallback(g_Window, key_callback);
+	swCreateMouseCallback(g_Window, mouse_callback);
+	swCreateMouseWheelCallback(g_Window, mouse_wheel_callback);
 
 	while(swGetIsWindowRunning(g_Window))
 	{
