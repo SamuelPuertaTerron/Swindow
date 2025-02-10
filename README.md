@@ -64,7 +64,8 @@ int main()
 
 ## Building the source
 
-Premake 5 is used to build the examples into a vs2022 solution. Donwload Premake5 from https://premake.github.io/ and place it inside Third-Party/premake folder. Run the `build.bat` file inside the `Build Scripts` directory. 
+Premake 5 is used to build the examples into a vs2022 solution. Run the `build.bat` file inside the `Build Scripts` directory.
+Premake 5 is already built-in, but if for any reason it is not present, download it from here https://premake.github.io/ 
 
 ## Futre Features Planned
 
