@@ -10,7 +10,7 @@
 
 ## Getting Started
 
-To get started, simply download the header file `Swindow.h` and include it in your C++ project.
+To get started, simply download the header file [`Swindow.h`](https://github.com/SamuelPuertaTerron/Swindow/releases/tag/V0.1) and include it in your C++ project.
 
 ## Simple Example
 
