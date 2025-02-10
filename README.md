@@ -4,7 +4,7 @@
 
 ## Features
 
-=- **Simple and Lightweight:** A single header file for easy integration.
+- **Simple and Lightweight:** A single header file for easy integration.
 - **User Input Handling:** Supports keyboard, mouse, and window events.
 - **No Dependencies:** Completely self-contained, with no external libraries required.
 
