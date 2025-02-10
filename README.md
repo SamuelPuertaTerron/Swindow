@@ -1,6 +1,6 @@
 # Swindow
 
-**Swindow** (Simple Window) is a lightweight, cross-platform library designed for managing windows and handling user input. It is written as a single header file in C++14, making it easy to integrate into your project with minimal setup.
+**Swindow** (Simple Window) is a lightweight, windows only library designed for managing windows and handling user input. It is written as a single header file in C++14, making it easy to integrate into your project with minimal setup.
 
 ## Features
 
@@ -64,6 +64,8 @@ int main()
 
 ## Building the source
 
-Premake 5 is used to build the examples into a vs2022 solution. Run the `build.bat` file inside the `Build Scripts` directory. 
+Premake 5 is used to build the examples into a vs2022 solution. Donwload Premake5 from https://premake.github.io/ and place it inside Third-Party/premake folder. Run the `build.bat` file inside the `Build Scripts` directory. 
+
+
 
 
