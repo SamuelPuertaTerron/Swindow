@@ -31,6 +31,8 @@ namespace SwindowExample
 
 	static bool g_ShouldClose;
 
+	static std::string g_TextBuffer;
+
 	// Adds an object at the specified world coordinates
 	static void Spawn(float x, float y);
 
@@ -46,6 +48,11 @@ namespace SwindowExample
 		if (isPressed && key == KeyCode::Escape)
 		{
 			g_Window->SetIsRunning(false);
+		}
+
+		if (isPressed && key == KeyCode::Enter)
+		{
+			std::cout << "Text Buffer: " << g_TextBuffer << "\n";
 		}
 	}
 
@@ -69,6 +76,23 @@ namespace SwindowExample
 		g_MousePosition.y = 1.0f - (static_cast<float>(mouseY) / screenHeight) * 2.0f; // Flip Y-axis
 	}
 
+	// Text Input
+	static void CharacterCallback(char character)
+	{
+		if (character == '\b')
+		{
+			// Remove the last character if the buffer isn't empty
+			if (!g_TextBuffer.empty())
+			{
+				g_TextBuffer.pop_back();
+			}
+		}
+		else
+		{
+			g_TextBuffer += character; // Append normal character
+		}
+	}
+
 	// Initializes and runs the application
 	static void Run()
 	{
@@ -87,6 +111,7 @@ namespace SwindowExample
 		g_Window->SetWindowKeyCallback(KeyCallback);
 		g_Window->SetWindowMouseCallback(MouseCallback);
 		g_Window->SetWindowMouseMoveCallback(MousePositionCallback);
+		g_Window->SetWindowCharacterCallback(CharacterCallback);
 
 		// OpenGL setup (legacy mode)
 		g_Window->CreateContext(1, 1, true);
@@ -101,6 +126,7 @@ namespace SwindowExample
 		while (g_Window->GetIsRunning())
 		{
 			g_Window->PollEvents(); // Process user input events
+
 			Render::Clear();        // Clear the screen
 
 			// Draw background quad at the center

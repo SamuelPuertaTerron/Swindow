@@ -1,4 +1,4 @@
-// Swindow - Simple Window
+﻿// Swindow - Simple Window
 // 
 // Swindow is a lightweight, cross-platform library for managing windows and handling user input.
 // Licensed under the MIT License. See LICENSE.txt for details.
@@ -19,6 +19,12 @@
 #pragma comment (lib, "opengl32.lib")
 #endif
 
+#ifdef __LINUX__
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xos.h>
+#endif	
+
 namespace Swindow
 {
 	//Forward Declarations
@@ -32,18 +38,18 @@ namespace Swindow
 	{
 		class NativeWindow;
 		class RenderContext;
-	}
+	}//Namespace Internal
 
 	//Types
+
 	using WindowPtr = std::shared_ptr<Window>;
 
-	//The render class (does not work in modern OpenGL)
 	using Render = Internal::RenderContext;
 
 	namespace Internal
 	{
 		using NativeWindowPtr = std::shared_ptr<Internal::NativeWindow>;
-	}
+	}//Namespace Internal
 
 	//Callbacks
 
@@ -102,6 +108,17 @@ namespace Swindow
 	 */
 	using WindowMouseMoveCallback = std::function<void(int x, int y)>;
 
+	/**
+	 * @brief Callback type for character input
+	 *
+	 * This callback is triggered when a character input event occurs,
+	 * typically when a key is pressed and results in a printable character.
+	 * It is useful for handling text input.
+	 *
+	 * @param character The result of the printable character, including special characters such as backspace ('\b'). 
+	 */
+	using WindowCharacterCallback = std::function<void(char character)>;
+
 	//Class Declarations
 
 	//Public
@@ -125,6 +142,7 @@ namespace Swindow
 		WindowKeyCallback WindowKeyCallback;
 		WindowMouseCallback WindowMouseCallback;
 		WindowMouseMoveCallback WindowMouseMoveCallback;
+		WindowCharacterCallback WindowCharacterCallback;
 	};
 
 	class Window
@@ -248,6 +266,8 @@ namespace Swindow
 		 * @param callback The function to handle mouse movement events.
 		 */
 		void SetWindowMouseMoveCallback(WindowMouseMoveCallback callback);
+
+		void SetWindowCharacterCallback(WindowCharacterCallback callback);
 
 		/**
 		 * @brief Sets the window size.
@@ -373,6 +393,8 @@ namespace Swindow
 		class NativeWindow
 		{
 		public:
+			virtual ~NativeWindow() = default;
+
 			static NativeWindowPtr Create(const WindowPtr& window);
 			virtual void Destroy() {}
 
@@ -397,7 +419,7 @@ namespace Swindow
 		public:
 			Win32NativeWindow(const WindowPtr& window);
 
-			~Win32NativeWindow() = default;
+			virtual ~Win32NativeWindow() override = default;
 
 			virtual void Destroy() override;
 
@@ -423,7 +445,30 @@ namespace Swindow
 
 #endif
 
-	}
+#ifdef __linux__
+		class X11NativeWindow : public NativeWindow
+		{
+		public:
+			X11NativeWindow(const WindowPtr& window);
+
+			~X11NativeWindow() = default;
+
+			virtual void Destroy() override;
+
+			virtual void PollEvents() override;
+			virtual void RefreshScreen() override;
+
+			virtual KeyCode ConvertNativeKeyCodes(int key) override;
+
+			virtual void CreateContext(int major = 4, int minor = 6, bool legacy = false) override;
+
+			virtual void* GetExternalAddress(const char* name) override;
+		private:
+			Display* m_Display;
+		};
+#endif
+
+	} //Namespace Internal
 
 
 	//Class Implementations
@@ -434,6 +479,7 @@ namespace Swindow
 
 	inline WindowPtr Window::Create(const WindowDescription& description)
 	{
+
 		auto window = std::make_shared<Window>();
 		window->m_WindowDescription = description;
 
@@ -443,7 +489,7 @@ namespace Swindow
 
 		Internal::Logger::Log("Created Window");
 
-		return window;
+		return window; //Return the parent window
 	}
 
 	inline void Window::Destroy() const
@@ -495,6 +541,11 @@ namespace Swindow
 	inline void Window::SetWindowMouseMoveCallback(WindowMouseMoveCallback callback)
 	{
 		m_WindowCallbacks.WindowMouseMoveCallback = std::move(callback);
+	}
+
+	inline void Window::SetWindowCharacterCallback(WindowCharacterCallback callback)
+	{
+		m_WindowCallbacks.WindowCharacterCallback = std::move(callback);
 	}
 
 	inline void Window::SetWindowCloseCallback(WindowCloseCallback callback)
@@ -817,6 +868,21 @@ namespace Swindow
 			//Windows message loop
 			switch (uMsg)
 			{
+			case WM_CHAR:
+				if (windowPtr->GetWindow()->GetWindowCallbacks().WindowCharacterCallback)
+				{
+					char character = static_cast<char>(wParam);
+
+					if (character == '\b')
+					{
+						windowPtr->GetWindow()->GetWindowCallbacks().WindowCharacterCallback('\b');
+					}
+					else
+					{
+						windowPtr->GetWindow()->GetWindowCallbacks().WindowCharacterCallback(character);
+					}
+				}
+				break;
 			case WM_SIZE:
 				//Window Resize Event
 				if (windowPtr->GetWindow()->GetWindowCallbacks().WindowResizeCallback)
@@ -918,7 +984,13 @@ namespace Swindow
 
 #endif
 
+#ifdef __linux__
+		inline X11NativeWindow::X11NativeWindow(const WindowPtr& window)
+		{
 
-	}
+		}
+#endif
+
+	}//Namespace Internal
 
 }//Namespace Swindow
