@@ -1,6 +1,6 @@
 # Swindow
 
-**Swindow** (Simple Window) is a lightweight, Windows library designed for managing windows and handling user input. It is written as a single header file in C++14, making it easy to integrate into your project with minimal setup.
+**Swindow** (Simple Window) is a lightweight, Windows library designed for managing windows and handling user input. It is written as a single header file in C++14, making it easy to implement into your project. 
 
 ## Features
 
