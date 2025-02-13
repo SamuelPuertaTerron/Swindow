@@ -11,6 +11,16 @@ project "Examples"
         "../Swindow.h",
     }
 
+    includedirs
+    {
+        "../%{IncludeDir.imgui}",
+    }
+
+    links
+    {
+        "IMGUI",
+    }
+
     filter "system:windows"
     systemversion "latest"
     defines 

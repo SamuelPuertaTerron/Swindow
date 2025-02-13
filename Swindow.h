@@ -738,7 +738,7 @@ namespace Swindow
 
 				{ VK_ESCAPE, KeyCode::Escape }, { VK_RETURN, KeyCode::Enter },
 				{ VK_SPACE, KeyCode::Space },   { VK_BACK, KeyCode::Backspace },
-				{ VK_TAB, KeyCode::Tab },		{ VK_SHIFT, KeyCode::Shift },
+				{ VK_TAB, KeyCode::Tab },		   { VK_SHIFT, KeyCode::Shift },
 				{ VK_CONTROL, KeyCode::Ctrl },	{ VK_MENU, KeyCode::Alt },
 
 				{ VK_LEFT, KeyCode::Left },		{ VK_RIGHT, KeyCode::Right },
@@ -897,7 +897,6 @@ namespace Swindow
 				break;
 			case WM_KEYDOWN:
 			case WM_KEYUP:
-				//Key Callback even
 				if (windowPtr->GetWindow()->GetWindowCallbacks().WindowKeyCallback)
 				{
 					KeyCode key = windowPtr->ConvertNativeKeyCodes(static_cast<int>(wParam));
@@ -994,3 +993,152 @@ namespace Swindow
 	}//Namespace Internal
 
 }//Namespace Swindow
+
+//Only define this if you want ImGui for your window.
+//Please note you will have to install ImGui separately. 
+#ifdef SW_IMGUI_IMPLEMENTATION
+
+#include "imgui/imgui.h"
+
+namespace SwindowImGui
+{
+	static Swindow::WindowPtr g_Window;
+
+	static int ConvertKeyCode(Swindow::KeyCode code)
+	{
+		return static_cast<int>(code);
+	}
+
+	inline bool ImGui_ImplSwindow_InitForOpenGL(Swindow::WindowPtr window, bool install_callbacks)
+	{
+		if (!window)
+			return false;
+
+		g_Window = window;
+
+		ImGuiIO& io = ImGui::GetIO();
+
+		// Navigation keys
+		io.KeyMap[ImGuiKey_Tab] = ConvertKeyCode(Swindow::KeyCode::Tab);
+		io.KeyMap[ImGuiKey_LeftArrow] = ConvertKeyCode(Swindow::KeyCode::Left);
+		io.KeyMap[ImGuiKey_RightArrow] = ConvertKeyCode(Swindow::KeyCode::Right);
+		io.KeyMap[ImGuiKey_UpArrow] = ConvertKeyCode(Swindow::KeyCode::Up);
+		io.KeyMap[ImGuiKey_DownArrow] = ConvertKeyCode(Swindow::KeyCode::Down);
+		io.KeyMap[ImGuiKey_PageUp] =	-1;
+		io.KeyMap[ImGuiKey_PageDown] =	-1;
+		io.KeyMap[ImGuiKey_Home] =		-1;
+		io.KeyMap[ImGuiKey_End] =		-1;
+		io.KeyMap[ImGuiKey_Insert] =	-1;
+		io.KeyMap[ImGuiKey_Delete] =	-1;
+
+		// Modifier keys
+		io.KeyMap[ImGuiKey_Backspace] = ConvertKeyCode(Swindow::KeyCode::Backspace);
+		io.KeyMap[ImGuiKey_Space] = ConvertKeyCode(Swindow::KeyCode::Space);
+		io.KeyMap[ImGuiKey_Enter] = ConvertKeyCode(Swindow::KeyCode::Enter);
+		io.KeyMap[ImGuiKey_Escape] = ConvertKeyCode(Swindow::KeyCode::Escape);
+
+		// Alphabet keys
+		for (char c = 'A'; c <= 'Z'; ++c) {
+			io.KeyMap[ImGuiKey_A + (c - 'A')] = c;
+		}
+
+		// Number keys (top row)
+		for (char c = '0'; c <= '9'; ++c) {
+			io.KeyMap[ImGuiKey_0 + (c - '0')] = c;
+		}
+
+		// Function keys (F1-F12)
+		io.KeyMap[ImGuiKey_F1] = ConvertKeyCode(Swindow::KeyCode::F1);
+		io.KeyMap[ImGuiKey_F2] = ConvertKeyCode(Swindow::KeyCode::F2);
+		io.KeyMap[ImGuiKey_F3] = ConvertKeyCode(Swindow::KeyCode::F3);
+		io.KeyMap[ImGuiKey_F4] = ConvertKeyCode(Swindow::KeyCode::F4);
+		io.KeyMap[ImGuiKey_F5] = ConvertKeyCode(Swindow::KeyCode::F5);
+		io.KeyMap[ImGuiKey_F6] = ConvertKeyCode(Swindow::KeyCode::F6);
+		io.KeyMap[ImGuiKey_F7] = ConvertKeyCode(Swindow::KeyCode::F7);
+		io.KeyMap[ImGuiKey_F8] = ConvertKeyCode(Swindow::KeyCode::F8);
+		io.KeyMap[ImGuiKey_F9] = ConvertKeyCode(Swindow::KeyCode::F9);
+		io.KeyMap[ImGuiKey_F10] = ConvertKeyCode(Swindow::KeyCode::F10);
+		io.KeyMap[ImGuiKey_F11] = ConvertKeyCode(Swindow::KeyCode::F11);
+		io.KeyMap[ImGuiKey_F12] = ConvertKeyCode(Swindow::KeyCode::F12);
+
+		// Numpad keys
+		io.KeyMap[ImGuiKey_Keypad0] = ConvertKeyCode(Swindow::KeyCode::Num0);
+		io.KeyMap[ImGuiKey_Keypad1] = ConvertKeyCode(Swindow::KeyCode::Num1);
+		io.KeyMap[ImGuiKey_Keypad2] = ConvertKeyCode(Swindow::KeyCode::Num2);
+		io.KeyMap[ImGuiKey_Keypad3] = ConvertKeyCode(Swindow::KeyCode::Num3);
+		io.KeyMap[ImGuiKey_Keypad4] = ConvertKeyCode(Swindow::KeyCode::Num4);
+		io.KeyMap[ImGuiKey_Keypad5] = ConvertKeyCode(Swindow::KeyCode::Num5);
+		io.KeyMap[ImGuiKey_Keypad6] = ConvertKeyCode(Swindow::KeyCode::Num6);
+		io.KeyMap[ImGuiKey_Keypad7] = ConvertKeyCode(Swindow::KeyCode::Num7);
+		io.KeyMap[ImGuiKey_Keypad8] = ConvertKeyCode(Swindow::KeyCode::Num8);
+		io.KeyMap[ImGuiKey_Keypad9] = ConvertKeyCode(Swindow::KeyCode::Num9);
+		io.KeyMap[ImGuiKey_KeypadEnter] = -1;
+
+		// Special characters
+		io.KeyMap[ImGuiKey_Semicolon] = -1;
+		io.KeyMap[ImGuiKey_Equal] = -1;
+		io.KeyMap[ImGuiKey_Comma] = -1;
+		io.KeyMap[ImGuiKey_Minus] = -1;
+		io.KeyMap[ImGuiKey_Period] = -1;
+		io.KeyMap[ImGuiKey_Slash] = -1;
+		io.KeyMap[ImGuiKey_LeftBracket] = -1;
+		io.KeyMap[ImGuiKey_Backslash] = -1;
+
+		if (install_callbacks) 
+		{
+			g_Window->SetWindowMouseMoveCallback([&](int x, int y)
+				{
+					io.MousePos.x = static_cast<float>(x);
+					io.MousePos.y = static_cast<float>(y);
+				});
+
+			g_Window->SetWindowMouseCallback([&](Swindow::MouseButton button, bool isPressed)
+				{
+					if (button == Swindow::MouseButton::LeftMouseButton)
+					{
+						io.MouseDown[0] = static_cast<int>(button) && isPressed;
+					}
+
+					if (button == Swindow::MouseButton::RightMouseButton)
+					{
+						io.MouseDown[1] = static_cast<int>(button) && isPressed;
+					}
+				});
+
+			g_Window->SetWindowCharacterCallback([&](char character)
+				{
+					io.AddInputCharacter(character);
+				});
+
+			g_Window->SetWindowKeyCallback([&](Swindow::KeyCode key, bool isPressed)
+				{
+					//Get the current ImGui key
+					int imguiKey = ConvertKeyCode(key);
+					if (imguiKey >= 0 && imguiKey < IM_ARRAYSIZE(io.KeysDown)) 
+					{
+						io.KeysDown[imguiKey] = isPressed;
+
+					}
+				});
+		}
+
+		return true;
+	}
+
+	inline void ImGui_ImplSwindow_Shutdown()
+	{
+		g_Window = nullptr;
+	}
+
+	inline void ImGui_ImplSwindow_NewFrame()
+	{
+		// Update display size
+		ImGuiIO& io = ImGui::GetIO();
+		io.DisplaySize = ImVec2((float)g_Window->GetWindowDescription().Width, (float)g_Window->GetWindowDescription().Height);
+
+		// Update delta time
+		io.DeltaTime = 0.016f;
+	}
+}
+
+#endif // SW_IMGUI_IMPLEMENTATION
