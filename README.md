@@ -7,7 +7,7 @@
 - **Simple and Lightweight:** A single header file for easy integration.
 - **User Input Handling:** Supports keyboard, mouse, and window events.
 - **No Dependencies:** Completely self-contained, with no external libraries required.
-
+- **Basic ImGui Support:** The ability to create ImGui windows, with support for Input fields. 
 ## Getting Started
 
 To get started, simply download the header file [`Swindow.h`](https://github.com/SamuelPuertaTerron/Swindow/releases/tag/V0.1) and include it in your C++ project.
